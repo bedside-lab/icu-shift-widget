@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>ICU 근무 타임라인</title>
+<title>근무 타임라인</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -125,14 +125,25 @@
     50%{ box-shadow:0 0 0 10px rgba(255,90,106,0.05); }
   }
 
-  .addtimebar{ display:flex; gap:8px; padding:12px 20px; border-top:1px solid var(--line); background:var(--panel-2); flex-shrink:0; }
+  .addtimebar{
+    display:flex; flex-direction:column; gap:8px; padding:14px 20px;
+    border-top:1px solid var(--line); background:var(--panel-2); flex-shrink:0;
+  }
+  .addtimebar .rowlabel{ font-size:11px; color:var(--muted); font-weight:600; letter-spacing:0.3px; }
+  .addtimebar .row{ display:flex; gap:8px; }
   .addtimebar input[type=time]{
-    width:100px; background:var(--bg); border:1px solid var(--line); color:var(--text);
-    border-radius:8px; padding:8px; font-family:'JetBrains Mono',monospace; font-size:14px;
+    width:120px; background:var(--bg); border:1.5px solid var(--line); color:var(--text);
+    border-radius:8px; padding:10px; font-family:'JetBrains Mono',monospace; font-size:15px;
+    font-weight:600;
+  }
+  .addtimebar input[type=time]:focus{ outline:none; border-color:var(--teal); }
+  .addtimebar input[type=time]::-webkit-calendar-picker-indicator{
+    filter:invert(1) brightness(1.6);
+    cursor:pointer;
   }
   .addtimebar button{
     flex:1; background:var(--teal); color:#06251f; border:none; border-radius:8px;
-    padding:0 16px; font-weight:700; font-size:13px; cursor:pointer;
+    padding:0 16px; font-weight:700; font-size:13.5px; cursor:pointer;
   }
   .addtimebar button:hover{ filter:brightness(1.08); }
 
@@ -186,14 +197,17 @@
   </div>
 
   <div class="actionbar">
-    <button onclick="clearAll()">🗑 전체 초기화</button>
+    <button onclick="clearAll()">🔄 내용 초기화 (시간대 유지)</button>
   </div>
 
   <div class="timeline" id="timeline"></div>
 
   <div class="addtimebar">
-    <input type="time" id="inTime">
-    <button onclick="addTimeSlot()">+ 시간 추가</button>
+    <span class="rowlabel">시간 직접 추가</span>
+    <div class="row">
+      <input type="time" id="inTime">
+      <button onclick="addTimeSlot()">+ 이 시간 추가하기</button>
+    </div>
   </div>
 
   <div class="brandbar">

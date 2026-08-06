@@ -33,7 +33,7 @@ function createWidgetWindow() {
     height: 760,
     minWidth: 380,
     minHeight: 500,
-    title: 'ICU 근무 타임라인',
+    title: '근무 타임라인',
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
