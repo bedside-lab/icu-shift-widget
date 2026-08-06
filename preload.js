@@ -14,4 +14,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 할 일 목록 파일 저장/불러오기 (프로그램 재시작해도 유지)
   loadTasks: () => ipcRenderer.invoke('load-tasks'),
   saveTasks: (tasks) => ipcRenderer.send('save-tasks', tasks),
+
+  // 프로그램 버전 조회 (정보 팝업용)
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
 });

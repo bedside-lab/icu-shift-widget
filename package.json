@@ -14,8 +14,8 @@
     "electron-builder": "^24.13.3"
   },
   "build": {
-    "appId": "com.bbo.shift-timeline",
-    "productName": "근무 타임라인",
+    "appId": "com.bbo.bedsidelab-shift-alert",
+    "productName": "Bedside Lab 업무알리미",
     "win": {
       "target": "nsis",
       "icon": "build/icon.ico"

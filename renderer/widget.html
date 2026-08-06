@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>근무 타임라인</title>
+<title>Bedside Lab 업무알리미</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap');
 
@@ -112,7 +112,7 @@
 
   .task.upcoming .time{ color:var(--amber); }
   .task.upcoming .dot{ background:var(--amber); box-shadow:0 0 0 4px rgba(245,166,35,0.15); }
-  .task.upcoming .body{ border-color:rgba(245,166,35,0.4); }
+  .task.upcoming .body{ border-color:rgba(245,166,35,0.5); background:rgba(245,166,35,0.09); }
   .task.now .time{ color:var(--red); }
   .task.now .dot{ background:var(--red); box-shadow:0 0 0 6px rgba(255,90,106,0.2); animation:pulse 1.2s infinite; }
   .task.now .body{ border-color:var(--red); background:rgba(255,90,106,0.06); }
@@ -131,29 +131,36 @@
   }
   .addtimebar .rowlabel{ font-size:11px; color:var(--muted); font-weight:600; letter-spacing:0.3px; }
   .addtimebar .row{ display:flex; gap:8px; }
-  .addtimebar input[type=time]{
-    width:120px; background:var(--bg); border:1.5px solid var(--line); color:var(--text);
-    border-radius:8px; padding:10px; font-family:'JetBrains Mono',monospace; font-size:15px;
-    font-weight:600;
+  .timeinputwrap{ position:relative; width:120px; flex-shrink:0; }
+  .timeinputwrap input[type=text]{
+    width:100%; background:var(--bg); border:1.5px solid var(--line); color:var(--text);
+    border-radius:8px; padding:10px 36px 10px 12px; font-family:'JetBrains Mono',monospace;
+    font-size:16px; font-weight:700; letter-spacing:1px;
   }
-  .addtimebar input[type=time]:focus{ outline:none; border-color:var(--teal); }
-  .addtimebar input[type=time]::-webkit-calendar-picker-indicator{
-    filter:invert(1) brightness(1.6);
-    cursor:pointer;
+  .timeinputwrap input[type=text]:focus{ outline:none; border-color:var(--teal); }
+  .timeinputwrap input[type=text]::placeholder{ color:var(--muted); font-size:12px; letter-spacing:0; font-weight:500; }
+  .timeinputwrap .clockbtn{
+    position:absolute; right:6px; top:50%; transform:translateY(-50%);
+    background:none; border:none; color:var(--muted); cursor:pointer; font-size:17px; padding:4px;
   }
-  .addtimebar button{
+  .timeinputwrap .clockbtn:hover{ color:var(--teal); }
+  .timeinputwrap input[type=time]{
+    position:absolute; inset:0; opacity:0; pointer-events:none; width:100%; height:100%;
+  }
+  .addtimebar button.addbtn{
     flex:1; background:var(--teal); color:#06251f; border:none; border-radius:8px;
     padding:0 16px; font-weight:700; font-size:13.5px; cursor:pointer;
   }
-  .addtimebar button:hover{ filter:brightness(1.08); }
+  .addtimebar button.addbtn:hover{ filter:brightness(1.08); }
 
   .brandbar{
-    display:flex; align-items:center; justify-content:center; gap:6px;
-    padding:6px 0 8px; background:var(--panel); flex-shrink:0;
-    opacity:0.45;
+    display:flex; align-items:center; justify-content:flex-end; gap:6px;
+    padding:8px 16px 10px; background:var(--panel); flex-shrink:0;
+    opacity:0.85; cursor:pointer;
   }
-  .brandbar img{ width:14px; height:14px; border-radius:3px; object-fit:cover; }
-  .brandbar span{ font-size:10px; letter-spacing:0.5px; color:var(--muted); font-weight:600; }
+  .brandbar:hover{ opacity:1; }
+  .brandbar img{ width:26px; height:26px; border-radius:6px; object-fit:cover; }
+  .brandbar span{ font-size:13px; letter-spacing:0.3px; color:var(--text); font-weight:700; }
 
   .overlay{
     position:fixed; inset:0; background:rgba(5,8,15,0.82); backdrop-filter:blur(4px);
@@ -203,16 +210,31 @@
   <div class="timeline" id="timeline"></div>
 
   <div class="addtimebar">
-    <span class="rowlabel">시간 직접 추가</span>
+    <span class="rowlabel">시간 직접 추가 (24시간제, 예: 2230 → 22:30)</span>
     <div class="row">
-      <input type="time" id="inTime">
-      <button onclick="addTimeSlot()">+ 이 시간 추가하기</button>
+      <div class="timeinputwrap">
+        <input type="text" id="inTimeText" inputmode="numeric" maxlength="5" placeholder="HH:MM">
+        <button type="button" class="clockbtn" onclick="openTimePicker()" title="시계로 선택">🕐</button>
+        <input type="time" id="inTimeHidden" tabindex="-1">
+      </div>
+      <button class="addbtn" onclick="addTimeSlot()">+ 이 시간 추가하기</button>
     </div>
   </div>
 
-  <div class="brandbar">
+  <div class="brandbar" onclick="openAbout()" title="프로그램 정보 보기">
     <img src="assets/logo.png" alt="logo">
     <span>Bedside Lab</span>
+  </div>
+</div>
+
+<div class="overlay" id="aboutOverlay">
+  <div class="confirmbox" style="text-align:center;">
+    <img src="assets/logo.png" alt="logo" style="width:88px;height:88px;border-radius:16px;object-fit:cover;margin-bottom:14px;">
+    <div style="font-size:17px;font-weight:700;margin-bottom:2px;">Bedside Lab 업무알리미</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Clinical Leadership · Healthcare Quality · Operational Innovation</div>
+    <div style="font-size:12.5px;color:var(--text);margin-bottom:4px;">Version <span id="aboutVersion">-</span></div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:22px;">© 2026 Bedside Lab. All rights reserved.</div>
+    <button class="yesbtn" style="width:100%;background:var(--teal);color:#06251f;" onclick="closeAbout()">닫기</button>
   </div>
 </div>
 

@@ -55,6 +55,7 @@ function persist() {
 }
 
 async function init() {
+  setupTimeInput();
   const now = new Date();
   const period = getCurrentPeriod(now);
   currentPeriod = period;
@@ -101,6 +102,18 @@ function tick() {
   render();
 }
 
+let appVersion = '1.0.0';
+async function openAbout() {
+  try {
+    appVersion = await window.electronAPI.getAppVersion();
+  } catch (e) {}
+  document.getElementById('aboutVersion').textContent = appVersion;
+  document.getElementById('aboutOverlay').classList.add('show');
+}
+function closeAbout() {
+  document.getElementById('aboutOverlay').classList.remove('show');
+}
+
 function togglePin() {
   pinned = !pinned;
   const btn = document.getElementById('pinBtn');
@@ -140,19 +153,54 @@ document.getElementById('confirmYesBtn').onclick = function () {
 
 function clearAll() {
   if (tasks.length === 0) { toast('이미 비어 있습니다'); return; }
-  askConfirm('현재 목록(' + tasks.length + '개)을 모두 지울까요?\n이 작업은 되돌릴 수 없습니다.', function () {
-    tasks = [];
-    persist();
-    toast('목록을 초기화했습니다');
-    render();
+  askConfirm('입력한 내용과 알람 설정을 모두 지우고\n기본 시간대(1시간 간격)로 되돌릴까요?', function () {
+    applyShift(currentPeriod, true);
+    toast('내용을 초기화했습니다');
+  });
+}
+
+function openTimePicker() {
+  const hidden = document.getElementById('inTimeHidden');
+  if (hidden.showPicker) {
+    try { hidden.showPicker(); return; } catch (e) {}
+  }
+  hidden.focus();
+  hidden.click();
+}
+
+function setupTimeInput() {
+  const textEl = document.getElementById('inTimeText');
+  const hiddenEl = document.getElementById('inTimeHidden');
+
+  textEl.addEventListener('input', () => {
+    let digits = textEl.value.replace(/\D/g, '').slice(0, 4);
+    let formatted = digits;
+    if (digits.length >= 3) formatted = digits.slice(0, 2) + ':' + digits.slice(2);
+    textEl.value = formatted;
+  });
+
+  textEl.addEventListener('blur', () => {
+    const v = textEl.value;
+    const m = v.match(/^(\d{1,2}):?(\d{2})$/);
+    if (m) {
+      let h = Math.min(23, parseInt(m[1], 10));
+      let mi = Math.min(59, parseInt(m[2], 10));
+      textEl.value = pad(h) + ':' + pad(mi);
+    }
+  });
+
+  // 시계 아이콘으로 고른 값(항상 24시간 HH:MM 형식)을 텍스트 입력에 반영
+  hiddenEl.addEventListener('change', () => {
+    if (hiddenEl.value) textEl.value = hiddenEl.value;
   });
 }
 
 function addTimeSlot() {
-  const time = document.getElementById('inTime').value;
-  if (!time) { toast('추가할 시간을 선택해주세요'); return; }
+  const time = document.getElementById('inTimeText').value;
+  if (!/^\d{2}:\d{2}$/.test(time)) { toast('시간을 HH:MM 형식으로 입력해주세요 (예: 22:30)'); return; }
   if (tasks.some(t => t.time === time)) { toast('이미 등록된 시간입니다'); return; }
   tasks.push({ id: Date.now(), time, memo: '', done: false, fired: false, alarmOn: false });
+  document.getElementById('inTimeText').value = '';
   persist();
   render();
 }

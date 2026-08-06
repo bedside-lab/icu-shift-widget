@@ -33,7 +33,7 @@ function createWidgetWindow() {
     height: 760,
     minWidth: 380,
     minHeight: 500,
-    title: '근무 타임라인',
+    title: 'Bedside Lab 업무알리미',
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -114,6 +114,10 @@ app.on('window-all-closed', () => {
 });
 
 // ===== IPC =====
+ipcMain.handle('get-app-version', () => {
+  return app.getVersion();
+});
+
 ipcMain.handle('load-tasks', () => {
   return loadTasksFromDisk();
 });
