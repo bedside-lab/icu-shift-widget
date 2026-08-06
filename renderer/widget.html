@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>ICU 근무 타임라인</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root{
+    --bg: #0a0f1a;
+    --panel: #111a2b;
+    --panel-2: #16213a;
+    --line: #223252;
+    --teal: #2dd4bf;
+    --amber: #f5a623;
+    --red: #ff5a6a;
+    --text: #e7edf7;
+    --muted: #7d8bab;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{
+    background: var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+
+  .widget{
+    flex:1;
+    background:var(--panel);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+
+  .clockhead{
+    padding:20px 20px 16px;
+    background:linear-gradient(180deg, var(--panel-2), var(--panel));
+    border-bottom:1px solid var(--line);
+    flex-shrink:0;
+  }
+  .dateline{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; }
+  .dateline .date{ font-size:14px; color:var(--muted); letter-spacing:0.5px; }
+  .headright{ display:flex; gap:6px; align-items:center; }
+  #pinBtn{
+    background:var(--panel); border:1px solid var(--line); color:var(--muted);
+    font-size:11px; font-weight:600; padding:4px 9px; border-radius:20px;
+    cursor:pointer; letter-spacing:0.3px;
+  }
+  #pinBtn.on{ background:rgba(45,212,191,0.12); border-color:var(--teal); color:var(--teal); }
+  .shiftbadge{
+    font-size:11px; font-weight:700; color:var(--teal);
+    border:1px solid rgba(45,212,191,0.4); background:rgba(45,212,191,0.08);
+    padding:3px 9px; border-radius:20px; letter-spacing:0.5px;
+  }
+  .clock{
+    font-family:'JetBrains Mono',monospace; font-size:48px; font-weight:700;
+    font-variant-numeric: tabular-nums; letter-spacing:1px; line-height:1;
+    text-shadow:0 0 24px rgba(45,212,191,0.15);
+  }
+  .clock .sec{ color:var(--teal); font-size:26px; margin-left:4px; }
+  .nextswitch{ font-size:11px; color:var(--muted); margin-top:6px; }
+
+  .actionbar{
+    display:flex; gap:8px; padding:10px 20px; border-bottom:1px solid var(--line);
+    background:var(--panel); flex-shrink:0;
+  }
+  .actionbar button{
+    flex:1; background:var(--panel-2); border:1px solid var(--line); color:var(--muted);
+    padding:8px 10px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;
+  }
+  .actionbar button:hover{ border-color:var(--red); color:var(--red); }
+
+  .timeline{ flex:1; overflow-y:auto; padding:14px 20px 20px; position:relative; }
+  .timeline::before{
+    content:''; position:absolute; left:50px; top:14px; bottom:14px; width:2px; background:var(--line);
+  }
+  .empty{ color:var(--muted); font-size:13px; text-align:center; padding:40px 0; }
+  .task{ position:relative; display:flex; gap:14px; padding:9px 0; align-items:flex-start; }
+  .task .time{
+    width:50px; flex-shrink:0; font-family:'JetBrains Mono',monospace;
+    font-size:14px; font-weight:700; color:var(--muted); padding-top:8px; position:relative; z-index:1;
+  }
+  .task .dot{
+    position:absolute; left:46px; top:13px; width:10px; height:10px; border-radius:50%;
+    background:var(--line); border:2px solid var(--panel); z-index:2;
+  }
+  .task .body{
+    flex:1; background:var(--panel-2); border:1px solid var(--line); border-radius:10px;
+    padding:8px 10px; display:flex; align-items:center; gap:8px;
+  }
+  .task .checkbtn{
+    background:none; border:1.5px solid var(--line); color:transparent; width:18px; height:18px;
+    border-radius:5px; cursor:pointer; flex-shrink:0; font-size:12px; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .task.done .checkbtn{ background:var(--teal); border-color:var(--teal); color:#06251f; }
+  .task .memo-input{
+    flex:1; background:transparent; border:none; color:var(--text); font-size:13.5px;
+    line-height:1.4; font-family:'Inter',sans-serif; padding:2px 0;
+  }
+  .task .memo-input::placeholder{ color:var(--muted); }
+  .task .memo-input:focus{ outline:none; }
+  .task .bellbtn{ background:none; border:none; cursor:pointer; font-size:15px; flex-shrink:0; opacity:0.3; filter:grayscale(1); }
+  .task .bellbtn.on{ opacity:1; filter:none; }
+  .task .del{ background:none; border:none; color:var(--muted); cursor:pointer; font-size:16px; flex-shrink:0; }
+  .task .del:hover{ color:var(--red); }
+
+  .task.upcoming .time{ color:var(--amber); }
+  .task.upcoming .dot{ background:var(--amber); box-shadow:0 0 0 4px rgba(245,166,35,0.15); }
+  .task.upcoming .body{ border-color:rgba(245,166,35,0.4); }
+  .task.now .time{ color:var(--red); }
+  .task.now .dot{ background:var(--red); box-shadow:0 0 0 6px rgba(255,90,106,0.2); animation:pulse 1.2s infinite; }
+  .task.now .body{ border-color:var(--red); background:rgba(255,90,106,0.06); }
+  .task.done .memo-input{ text-decoration:line-through; color:var(--muted); }
+  .task.done .dot{ background:var(--teal); }
+  .task.done .body{ opacity:0.55; }
+
+  @keyframes pulse{
+    0%,100%{ box-shadow:0 0 0 6px rgba(255,90,106,0.2); }
+    50%{ box-shadow:0 0 0 10px rgba(255,90,106,0.05); }
+  }
+
+  .addtimebar{ display:flex; gap:8px; padding:12px 20px; border-top:1px solid var(--line); background:var(--panel-2); flex-shrink:0; }
+  .addtimebar input[type=time]{
+    width:100px; background:var(--bg); border:1px solid var(--line); color:var(--text);
+    border-radius:8px; padding:8px; font-family:'JetBrains Mono',monospace; font-size:14px;
+  }
+  .addtimebar button{
+    flex:1; background:var(--teal); color:#06251f; border:none; border-radius:8px;
+    padding:0 16px; font-weight:700; font-size:13px; cursor:pointer;
+  }
+  .addtimebar button:hover{ filter:brightness(1.08); }
+
+  .overlay{
+    position:fixed; inset:0; background:rgba(5,8,15,0.82); backdrop-filter:blur(4px);
+    display:none; align-items:center; justify-content:center; z-index:999;
+  }
+  .overlay.show{ display:flex; }
+  .confirmbox{
+    background:var(--panel); border:1px solid var(--line); border-radius:20px;
+    padding:32px 36px; text-align:center; width:340px; box-shadow:0 20px 60px rgba(0,0,0,0.5);
+  }
+  .confirmbox .label{ color:var(--amber); font-weight:700; font-size:13px; letter-spacing:2px; margin-bottom:10px; }
+  .confirmbox .msg{ font-size:15px; line-height:1.6; margin-bottom:22px; white-space:pre-line; }
+  .confirmbox .btnrow{ display:flex; gap:10px; }
+  .confirmbox button{
+    flex:1; border:none; padding:11px; border-radius:10px; font-weight:700; font-size:13.5px; cursor:pointer;
+  }
+  .confirmbox .cancelbtn{ background:var(--panel-2); border:1px solid var(--line); color:var(--text); }
+  .confirmbox .yesbtn{ background:var(--red); color:#fff; }
+
+  #toastEl{
+    position:fixed; top:14px; left:50%; transform:translateX(-50%);
+    background:#16213a; border:1px solid #2dd4bf; color:#e7edf7; padding:9px 18px;
+    border-radius:20px; font-size:12.5px; font-weight:600; z-index:1000;
+    box-shadow:0 8px 24px rgba(0,0,0,0.4); opacity:0; transition:opacity 0.2s; pointer-events:none;
+  }
+</style>
+</head>
+<body>
+
+<div class="widget">
+  <div class="clockhead">
+    <div class="dateline">
+      <span class="date" id="dateStr">-</span>
+      <div class="headright">
+        <button id="pinBtn" onclick="togglePin()" title="항상 위 고정 켜기/끄기">📌 고정 꺼짐</button>
+        <span class="shiftbadge" id="shiftBadge">-</span>
+      </div>
+    </div>
+    <div class="clock"><span id="hm">--:--</span><span class="sec" id="ss">--</span></div>
+    <div class="nextswitch" id="nextSwitch"></div>
+  </div>
+
+  <div class="actionbar">
+    <button onclick="clearAll()">🗑 전체 초기화</button>
+  </div>
+
+  <div class="timeline" id="timeline"></div>
+
+  <div class="addtimebar">
+    <input type="time" id="inTime">
+    <button onclick="addTimeSlot()">+ 시간 추가</button>
+  </div>
+</div>
+
+<div class="overlay" id="confirmOverlay">
+  <div class="confirmbox">
+    <div class="label">⚠ 확인</div>
+    <div class="msg" id="confirmMsg">정말 초기화할까요?</div>
+    <div class="btnrow">
+      <button class="cancelbtn" onclick="closeConfirm()">취소</button>
+      <button class="yesbtn" id="confirmYesBtn">초기화</button>
+    </div>
+  </div>
+</div>
+
+<script src="widget.js"></script>
+</body>
+</html>
