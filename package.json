@@ -17,7 +17,8 @@
     "appId": "com.bbo.icu-shift-widget",
     "productName": "ICU 근무 타임라인",
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,
