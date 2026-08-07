@@ -2,6 +2,10 @@ const { app, BrowserWindow, ipcMain, screen } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
+// 일부 회사/가상PC 환경에서는 그래픽(GPU) 가속이 제한되어 있어
+// 창이 흰 화면으로만 뜨는 경우가 있습니다. 이를 방지하기 위해 GPU 가속을 끕니다.
+app.disableHardwareAcceleration();
+
 const DATA_FILE = path.join(app.getPath('userData'), 'tasks.json');
 
 let widgetWindow = null;
